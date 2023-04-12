@@ -1,0 +1,48 @@
+---
+title: "Validating a brms model with targets"
+author: "Andrew MacDonald"
+format: html
+---
+
+```{r}
+library(targets)
+suppressPackageStartupMessages(library(tidyverse))
+```
+
+
+## Goal
+
+to create a workflow for validating brms models using a targets pipeline
+
+the idea is to use the tools already in brms and `targets` to automate this useful and common task.
+
+* define a model using `brms` syntax
+* simulate out of the prior using `brms`
+* for each (of some sample of) prior simulation, fit the model 
+* does the parameter estimate cover the real value?
+
+## plotting
+
+here is an example of some simulated datasets
+
+```{r}
+tar_load(prior_predictive_draws)
+
+prior_predictive_draws |> 
+  head() |> 
+  unnest(simulated_data) |> 
+  ggplot(aes(x = x, y = y)) + 
+  geom_point() + 
+  geom_line(aes(y = epred)) + 
+  facet_wrap(~draw_id)
+```
+
+And here is the coverage for the different intervals:
+
+```{r}
+tar_load(coverage)
+
+knitr::kable(coverage)
+```
+
+
