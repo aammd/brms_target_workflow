@@ -139,14 +139,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>to create a workflow for validating brms models using a targets pipeline</p>
 <p>the idea is to use the tools already in brms and <code>targets</code> to automate this useful and common task.</p>
 <ul>
-<li>define a model using <code>brms</code> syntax</li>
+<li>set up a model formula using <code>brms</code> syntax.</li>
+<li>define the priors using <code>brms</code> syntax</li>
 <li>simulate out of the prior using <code>brms</code></li>
-<li>for each (of some sample of) prior simulation, fit the model</li>
-<li>does the parameter estimate cover the real value?</li>
+<li>for each (of some sample of) prior simulation, fit the model using <code>targets</code> dynamic branching</li>
+<li>calculate the proportion of simulated datasets where the model was able to recover parameters</li>
+<li>put results in a markdown document with <code>tarchetypes::tar_quarto</code></li>
 </ul>
 </section>
-<section id="plotting" class="level2">
-<h2 class="anchored" data-anchor-id="plotting">plotting</h2>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
 <p>here is an example of some simulated datasets</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_load</span>(prior_predictive_draws)</span>
@@ -178,11 +180,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">b_Intercept</td>
-<td style="text-align: right;">0.95</td>
+<td style="text-align: right;">0.8415842</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">b_x</td>
-<td style="text-align: right;">0.95</td>
+<td style="text-align: right;">0.9207921</td>
 </tr>
 </tbody>
 </table>

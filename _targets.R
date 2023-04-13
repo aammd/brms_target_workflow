@@ -29,7 +29,7 @@ tar_source(files = "functions.R")
 list(
   tar_target(
     name = data,
-    command = tibble(x = seq(from = -1, to = 1, length.out = 100),
+    command = tibble(x = seq(from = -1, to = 1, length.out = 33),
                      y = 0)
     #   format = "feather" # efficient storage of large data frames # nolint
   ),
@@ -62,7 +62,7 @@ list(
     prior_predictive_draws,
     command = make_prior_draws_df(
       brms_prior_model = brm_linear,
-      draw_vec = 25:44
+      draw_vec = 25:125
     )
   ),
   tar_target(

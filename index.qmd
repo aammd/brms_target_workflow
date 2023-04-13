@@ -16,12 +16,14 @@ to create a workflow for validating brms models using a targets pipeline
 
 the idea is to use the tools already in brms and `targets` to automate this useful and common task.
 
-* define a model using `brms` syntax
+* set up a model formula using `brms` syntax.
+* define the priors using `brms` syntax
 * simulate out of the prior using `brms`
-* for each (of some sample of) prior simulation, fit the model 
-* does the parameter estimate cover the real value?
+* for each (of some sample of) prior simulation, fit the model using `targets` dynamic branching
+* calculate the proportion of simulated datasets where the model was able to recover parameters
+* put results in a markdown document with `tarchetypes::tar_quarto`
 
-## plotting
+## Results
 
 here is an example of some simulated datasets
 
