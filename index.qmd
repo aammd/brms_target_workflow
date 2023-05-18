@@ -127,7 +127,6 @@ In a few targets steps, update the model object with each of the prior simulatio
 finally calculate the coverage with a big, handy composed function:
 
 ```r
-
   tar_target(
     coverage,
     command = calculate_coverage(prior_predictive_draws, all_models)
