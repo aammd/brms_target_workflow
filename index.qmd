@@ -48,3 +48,88 @@ knitr::kable(coverage)
 ```
 
 
+## outline of the workflow
+
+Because Andrew keeps forgetting his own recipie:
+
+In `targets`, set up the ingredients: 
+* data
+* model
+* priors
+* model object
+
+```r
+  tar_target(
+    name = data,
+    command = tibble(x = seq(from = -1, to = 1, length.out = 33),
+                     y = 0)
+  ),
+  tar_target(
+    name = bf_linear,
+    command = bf(y ~ 0 + Intercept + x, family = poisson())
+  ),
+  tar_target(
+    name = prior_linear,
+    command = c(prior(normal(0, .5), class = "b", coef = "x"),
+                prior(normal(3, .5), class = "b", coef = "Intercept"))
+  ),
+  tar_target(
+    name = brm_linear,
+    command = brm(bf_linear,
+                  data = data,
+                  prior = prior_linear,
+                  sample_prior = "only",
+                  chains = 2,
+                  iter = 1000,
+                  backend = "cmdstanr",
+                  file_refit = "on_change")
+    # on_change probably not necessary
+  ),
+```
+
+Now generate prior predictive simulations
+
+```r
+  tar_target(
+    prior_predictive_draws,
+    simulate_from_prior(data_values = data,
+                        prior_spec = prior_linear,
+                        bf_object = bf_linear,
+                        draws_wanted = 50:100)
+  ),
+```
+
+
+In a few targets steps, update the model object with each of the prior simulations
+
+```r
+
+  tar_target(
+    one_model,
+    set_up_one_model(
+      one_sampled_model = brm_linear,
+      dataframe = df_list[[1]]
+    )
+  ),
+  tar_target(
+    df_list,
+    prior_predictive_draws$simulated_data
+  ),
+  tar_target(
+    all_models,
+    command = update(one_model,
+                     newdata = df_list,
+                     recompile = FALSE),
+    pattern = map(df_list),
+    iteration = "list"
+  ),
+```
+finally calculate the coverage with a big, handy composed function:
+
+```r
+
+  tar_target(
+    coverage,
+    command = calculate_coverage(prior_predictive_draws, all_models)
+  ),
+```

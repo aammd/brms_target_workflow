@@ -31,15 +31,10 @@ list(
     name = data,
     command = tibble(x = seq(from = -1, to = 1, length.out = 33),
                      y = 0)
-    #   format = "feather" # efficient storage of large data frames # nolint
   ),
   tar_target(
     name = bf_linear,
     command = bf(y ~ 0 + Intercept + x, family = poisson())
-  ),
-  tar_target(
-    name = get_prior_linear,
-    command = get_prior(bf_linear, data = data)
   ),
   tar_target(
     name = prior_linear,
@@ -47,35 +42,33 @@ list(
                 prior(normal(3, .5), class = "b", coef = "Intercept"))
   ),
   tar_target(
-    name = brm_linear,
-    command = brm(bf_linear,
-                  data = data,
-                  prior = prior_linear,
-                  sample_prior = "only",
-                  chains = 2,
-                  iter = 1000,
-                  backend = "cmdstanr",
-                  file_refit = "on_change")
-    # on_change probably not necessary
+    prior_predictive_draws,
+    simulate_from_prior(data_values = data,
+                        prior_spec = prior_linear,
+                        bf_object = bf_linear,
+                        draws_wanted = 50:100)
   ),
   tar_target(
-    prior_predictive_draws,
-    command = make_prior_draws_df(
-      brms_prior_model = brm_linear,
-      draw_vec = 25:125
-    )
+    brm_linear,
+    brm(bf_linear,
+        data = data,
+        prior = prior_linear,
+        sample_prior = "only",
+        chains =2,
+        iter = 1000,
+        backend = "cmdstanr",
+        file_refit = "on_change")
   ),
   tar_target(
     one_model,
-    command =
-      update(brm_linear,
-             sample_prior = "no",
-             newdata = df_list[[1]],
-             iter = 2000, chains = 4)
+    set_up_one_model(
+      one_sampled_model = brm_linear,
+      dataframe = df_list[[1]]
+    )
   ),
   tar_target(
     df_list,
-    command = prior_predictive_draws$simulated_data
+    prior_predictive_draws$simulated_data
   ),
   tar_target(
     all_models,
@@ -86,19 +79,8 @@ list(
     iteration = "list"
   ),
   tar_target(
-    coverage_posteriors,
-    command = tibble::tibble(
-      draw_id = prior_predictive_draws$draw_id,
-      coefs = purrr::map(all_models, posterior::summarise_draws))
-  ),
-  tar_target(
-    prior_post_combined,
-    command = merge_prior_and_posterior_summary(prior_predictive_draws,
-                                                coverage_posteriors)
-  ),
-  tar_target(
     coverage,
-    command = calculate_post_coverage(prior_post_combined)
+    command = calculate_coverage(prior_predictive_draws, all_models)
   ),
   tar_quarto(report, "index.qmd")
 )

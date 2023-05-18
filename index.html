@@ -180,16 +180,82 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">b_Intercept</td>
-<td style="text-align: right;">0.8415842</td>
+<td style="text-align: right;">0.96</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">b_x</td>
-<td style="text-align: right;">0.9207921</td>
+<td style="text-align: right;">0.92</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
+</section>
+<section id="outline-of-the-workflow" class="level2">
+<h2 class="anchored" data-anchor-id="outline-of-the-workflow">outline of the workflow</h2>
+<p>Because Andrew keeps forgetting his own recipie:</p>
+<p>In <code>targets</code>, set up the ingredients: * data * model * priors * model object</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tar_target</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> data,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">command =</span> <span class="fu">tibble</span>(<span class="at">x =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">to =</span> <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">33</span>),</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">y =</span> <span class="dv">0</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tar_target</span>(</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> bf_linear,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">command =</span> <span class="fu">bf</span>(y <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Intercept <span class="sc">+</span> x, <span class="at">family =</span> <span class="fu">poisson</span>())</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tar_target</span>(</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> prior_linear,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">command =</span> <span class="fu">c</span>(<span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, .<span class="dv">5</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">coef =</span> <span class="st">"x"</span>),</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">3</span>, .<span class="dv">5</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">coef =</span> <span class="st">"Intercept"</span>))</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tar_target</span>(</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> brm_linear,</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">command =</span> <span class="fu">brm</span>(bf_linear,</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>                  <span class="at">data =</span> data,</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>                  <span class="at">prior =</span> prior_linear,</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>                  <span class="at">sample_prior =</span> <span class="st">"only"</span>,</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>                  <span class="at">chains =</span> <span class="dv">2</span>,</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>                  <span class="at">iter =</span> <span class="dv">1000</span>,</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>                  <span class="at">backend =</span> <span class="st">"cmdstanr"</span>,</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>                  <span class="at">file_refit =</span> <span class="st">"on_change"</span>)</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># on_change probably not necessary</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  ),</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Now generate prior predictive simulations</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tar_target</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    prior_predictive_draws,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">simulate_from_prior</span>(<span class="at">data_values =</span> data,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">prior_spec =</span> prior_linear,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">bf_object =</span> bf_linear,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                        <span class="at">draws_wanted =</span> <span class="dv">50</span><span class="sc">:</span><span class="dv">100</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  ),</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>In a few targets steps, update the model object with each of the prior simulations</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tar_target</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    one_model,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set_up_one_model</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">one_sampled_model =</span> brm_linear,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">dataframe =</span> df_list[[<span class="dv">1</span>]]</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tar_target</span>(</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    df_list,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    prior_predictive_draws<span class="sc">$</span>simulated_data</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tar_target</span>(</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    all_models,</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">command =</span> <span class="fu">update</span>(one_model,</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>                     <span class="at">newdata =</span> df_list,</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>                     <span class="at">recompile =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">pattern =</span> <span class="fu">map</span>(df_list),</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">iteration =</span> <span class="st">"list"</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  ),</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>finally calculate the coverage with a big, handy composed function:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tar_target</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    coverage,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">command =</span> <span class="fu">calculate_coverage</span>(prior_predictive_draws, all_models)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  ),</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 
 </main>

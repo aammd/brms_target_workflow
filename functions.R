@@ -56,3 +56,71 @@ calculate_post_coverage <- function(.prior_post_combined){
     dplyr::summarise(prop_covered = mean(covered))
 }
 
+###
+
+#' sets up a model for calculating
+#'
+#'For some reason the brms model wants to recompile by default. This
+#'
+#' @param one_sampled_model a model, probably the one that was sampled to generate the prior predictions
+#' @param dataframe one dataframe (could be a posterior)
+#'
+#' @return
+set_up_one_model <- function(one_sampled_model, dataframe){
+  update(one_sampled_model,
+         sample_prior = "no",
+         newdata = dataframe,
+         iter = 2000, chains = 4)
+}
+
+
+simulate_from_prior <- function(data_values,
+                                prior_spec,
+                                bf_object,
+                                draws_wanted = 25:49){
+
+  brm_prior_sample_only <- brm(bf_object,
+                               data = data_values,
+                               prior = prior_spec,
+                               sample_prior = "only",
+                               chains = 2,
+                               iter = 1000,
+                               backend = "cmdstanr",
+                               file_refit = "on_change")
+
+  twenty_five_simulations <- make_prior_draws_df(
+    brms_prior_model = brm_prior_sample_only,
+    draw_vec = 25:49)
+
+  return(twenty_five_simulations)
+}
+
+#' Calculate coverage of the posterior
+#'
+#' Composed function that combines three steps:
+#' * summarize posterior
+#' * merge with the prior predictive draws (these contain the true parameter values)
+#' * calculate how many times the true value is in the interval
+#'
+#' @param prior_predictive_draws the dataframe of prior draws. result of `simulate_from_prior()`
+#' @param all_models the list of all models fit to these draws.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+calculate_coverage <- function(prior_predictive_draws, all_models){
+
+  coverage_posteriors <- tibble::tibble(
+    draw_id = prior_predictive_draws$draw_id,
+    coefs = purrr::map(all_models, posterior::summarise_draws))
+
+  prior_post_combined <- merge_prior_and_posterior_summary(
+    prior_predictive_draws,
+    coverage_posteriors)
+
+  coverage <- calculate_post_coverage(prior_post_combined)
+
+  return(coverage)
+
+}
